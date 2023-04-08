@@ -1,0 +1,39 @@
+version: '3.9'
+
+services:
+    database:
+        image: postgres:13-alpine
+        env_file:
+            - .env
+        volumes:
+            - database-vol:/var/lib/postgresql/data     
+
+    app:
+        build:
+            context: .
+        # automatic restart after crashs    
+        restart: always
+        volumes:
+            # mounting static dirs for sharing with nginX using named volumes
+            - static-data:/source/vol/web/
+        env_file:
+            - .env
+        depends_on:
+            - database
+    
+    proxy:
+        build:
+            context: ./proxy
+        restart: always
+        depends_on:
+            - app
+        ports:
+            - 80:${LISTEN_PORT}
+        volumes:
+            - static-data:/home/app/static
+        env_file:
+            - .env
+
+volumes:
+    static-data:
+    database-vol:
